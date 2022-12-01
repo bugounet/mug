@@ -24,11 +24,15 @@ def format_image(input_name, output_name):
 
 avatars = glob.glob("*")
 for avatar in avatars:
-    if "jpeg" in avatar:
-        input_name = f"{avatar}"
-        output_name = f"bw_{avatar}"
-        print(f"input_name={input_name} - output_name={output_name.lower()}")
-        format_image(input_name, output_name)
+    print(avatar)
+    img = Image.open(avatar)
+    img = img.convert(mode="1")
+    img.tobitmap()
+    print(avatar)
+    parts = avatar.split("_")
+    print(parts[1])
+    img.save(parts[1])
+    
 
 # def format_image_bw(name):
 #     image = Image.open("avatars/Aric.jpeg")
