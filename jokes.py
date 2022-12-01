@@ -1,4 +1,5 @@
 import enum
+import qrcode
 from datetime import datetime
 import os
 from random import randrange
@@ -84,7 +85,10 @@ QR_CODE_DISPLAYED = False
 def display_qr_code():
     global QR_CODE_DISPLAYED
     if not QR_CODE_DISPLAYED:
-        print("QR CODE")
+        qr = qrcode.QRCode(
+        )
+        qr.add_data('shorturl.at/dnyzT')
+        qr.print_ascii()
         QR_CODE_DISPLAYED = True
 
 def clear_display_qr_code_state():
