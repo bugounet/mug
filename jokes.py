@@ -1,8 +1,54 @@
 import os
+from random import randrange
+
 api_key = os.environ.get("AIRTABLE_API_KEY", None)
 
 from pyairtable import Table
+
 base_id = 'app60r3wYfbygIeZ5'
 table_name = 'tblVGZBO6BSTH1EHL'
+
 table = Table(api_key, base_id, table_name)
-print(table.all())
+
+jokes = []
+jokes_table_data = table.all()
+
+for jokes_table_data_item in jokes_table_data:
+    jokes.append(jokes_table_data_item.get("fields").get("Blague"))
+
+import time, threading
+
+StartTime=time.time()
+
+def print_next_joke() :
+    random_joke_index = randrange(len(jokes))
+    random_joke = jokes[random_joke_index]
+    print_joke(random_joke)
+
+class setInterval :
+    def __init__(self,interval,action) :
+        self.interval=interval
+        self.action=action
+        self.stopEvent=threading.Event()
+        thread=threading.Thread(target=self.__setInterval)
+        thread.start()
+
+    def __setInterval(self) :
+        nextTime=time.time()+self.interval
+        while not self.stopEvent.wait(nextTime-time.time()) :
+            nextTime+=self.interval
+            self.action()
+
+    def cancel(self) :
+        self.stopEvent.set()
+
+JOKES_SELECTION_INTERVAL = 1
+inter=setInterval(JOKES_SELECTION_INTERVAL, print_next_joke)
+
+# will stop interval in 5s
+# t=threading.Timer(5,inter.cancel)
+# t.start()
+
+def print_joke(sentence: str):
+    print(sentence)
+
