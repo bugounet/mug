@@ -3,12 +3,8 @@ from dataclasses import dataclass
 import time
 from PIL import Image, ImageDraw, ImageFont
 from typing import Any
-
-joke = (
-    "Je ne dis pas que je suis Batman. "
-    "Je dis juste qu'on ne nous a jamais vu ensembles dans la même pièce."
-)
 import textwrap
+import time
 
 
 @dataclass
@@ -36,8 +32,22 @@ def get_size(epd):
 
 epd = epd2in13d.EPD()
 
-FONT_SIZE = 15
-line_LENGTH = 28
+FONT_SIZE = 24
+LINE_LENGTH = 20
+PAGE_SIZE = 80
+
+
+def split_joke(joke_sentence):
+    aggregation = [""]
+    page_index = 0
+    for part in joke_sentence.split():
+        concat = f"{aggregation[page_index]} {part}"
+        if len(concat) > PAGE_SIZE:
+            page_index += 1
+            aggregation.append("")
+
+        aggregation[page_index] = aggregation[page_index] + " " + part
+    return aggregation
 
 
 def print_joke(sentence: str):
@@ -48,7 +58,7 @@ def print_joke(sentence: str):
     size = get_size(epd)
     image = create_empty_frame(size)
 
-    lines = textwrap.wrap(sentence, width=28)
+    lines = textwrap.wrap(sentence, width=LINE_LENGTH)
     for line_num, line in enumerate(lines):
         image.dessin.text((5, 5 + line_num * FONT_SIZE), line, font=font, fill=0)
 
@@ -56,4 +66,11 @@ def print_joke(sentence: str):
 
 
 if __name__ == "__main__":
-    print_joke(joke)
+    joke = (
+        "Je ne dis pas que je suis Batman. "
+        "Je dis juste qu'on ne nous a jamais vu ensembles dans la même pièce."
+    )
+    pages = split_joke(joke)
+    for page in pages:
+        print_joke(page)
+        time.sleep(5)

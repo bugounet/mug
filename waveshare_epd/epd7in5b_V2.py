@@ -32,10 +32,11 @@ import logging
 from . import epdconfig
 
 # Display resolution
-EPD_WIDTH       = 800
-EPD_HEIGHT      = 480
+EPD_WIDTH = 800
+EPD_HEIGHT = 480
 
 logger = logging.getLogger(__name__)
+
 
 class EPD:
     def __init__(self):
@@ -49,11 +50,11 @@ class EPD:
     # Hardware reset
     def reset(self):
         epdconfig.digital_write(self.reset_pin, 1)
-        epdconfig.delay_ms(200) 
+        epdconfig.delay_ms(200)
         epdconfig.digital_write(self.reset_pin, 0)
         epdconfig.delay_ms(4)
         epdconfig.digital_write(self.reset_pin, 1)
-        epdconfig.delay_ms(200)   
+        epdconfig.delay_ms(200)
 
     def send_command(self, command):
         epdconfig.digital_write(self.dc_pin, 0)
@@ -66,8 +67,8 @@ class EPD:
         epdconfig.digital_write(self.cs_pin, 0)
         epdconfig.spi_writebyte([data])
         epdconfig.digital_write(self.cs_pin, 1)
-    
-    def send_data2(self, data): #faster
+
+    def send_data2(self, data):  # faster
         epdconfig.digital_write(self.dc_pin, 1)
         epdconfig.digital_write(self.cs_pin, 0)
         epdconfig.spi_writebyte2(data)
@@ -77,75 +78,92 @@ class EPD:
         logger.debug("e-Paper busy")
         self.send_command(0x71)
         busy = epdconfig.digital_read(self.busy_pin)
-        while(busy == 0):
+        while busy == 0:
             self.send_command(0x71)
             busy = epdconfig.digital_read(self.busy_pin)
         epdconfig.delay_ms(200)
         logger.debug("e-Paper busy release")
-        
+
     def init(self):
-        if (epdconfig.module_init() != 0):
+        if epdconfig.module_init() != 0:
             return -1
-            
+
         self.reset()
-        
+
         # self.send_command(0x06)     # btst
         # self.send_data(0x17)
         # self.send_data(0x17)
         # self.send_data(0x38)        # If an exception is displayed, try using 0x38
         # self.send_data(0x17)
 
-        self.send_command(0x01);			#POWER SETTING
-        self.send_data(0x07);
-        self.send_data(0x07);    #VGH=20V,VGL=-20V
-        self.send_data(0x3f);		#VDH=15V
-        self.send_data(0x3f);		#VDL=-15V
+        self.send_command(0x01)
+        # POWER SETTING
+        self.send_data(0x07)
+        self.send_data(0x07)
+        # VGH=20V,VGL=-20V
+        self.send_data(0x3F)
+        # VDH=15V
+        self.send_data(0x3F)
+        # VDL=-15V
 
-        self.send_command(0x04); #POWER ON
-        epdconfig.delay_ms(100);
-        self.ReadBusy();
+        self.send_command(0x04)
+        # POWER ON
+        epdconfig.delay_ms(100)
+        self.ReadBusy()
 
-        self.send_command(0X00);			#PANNEL SETTING
-        self.send_data(0x0F);   #KW-3f   KWR-2F	BWROTP 0f	BWOTP 1f
+        self.send_command(0x00)
+        # PANNEL SETTING
+        self.send_data(0x0F)
+        # KW-3f   KWR-2F	BWROTP 0f	BWOTP 1f
 
-        self.send_command(0x61);        	#tres
-        self.send_data(0x03);		#source 800
-        self.send_data(0x20);
-        self.send_data(0x01);		#gate 480
-        self.send_data(0xE0);
+        self.send_command(0x61)
+        # tres
+        self.send_data(0x03)
+        # source 800
+        self.send_data(0x20)
+        self.send_data(0x01)
+        # gate 480
+        self.send_data(0xE0)
 
-        self.send_command(0X15);
-        self.send_data(0x00);
+        self.send_command(0x15)
+        self.send_data(0x00)
 
-        self.send_command(0X50);			#VCOM AND DATA INTERVAL SETTING
-        self.send_data(0x11);
-        self.send_data(0x07);
+        self.send_command(0x50)
+        # VCOM AND DATA INTERVAL SETTING
+        self.send_data(0x11)
+        self.send_data(0x07)
 
-        self.send_command(0X60);			#TCON SETTING
-        self.send_data(0x22);
+        self.send_command(0x60)
+        # TCON SETTING
+        self.send_data(0x22)
 
-        self.send_command(0x65);
-        self.send_data(0x00);
-        self.send_data(0x00);
-        self.send_data(0x00);
-        self.send_data(0x00);
-    
+        self.send_command(0x65)
+        self.send_data(0x00)
+        self.send_data(0x00)
+        self.send_data(0x00)
+        self.send_data(0x00)
+
         return 0
 
     def getbuffer(self, image):
         img = image
         imwidth, imheight = img.size
-        if(imwidth == self.width and imheight == self.height):
-            img = img.convert('1')
-        elif(imwidth == self.height and imheight == self.width):
+        if imwidth == self.width and imheight == self.height:
+            img = img.convert("1")
+        elif imwidth == self.height and imheight == self.width:
             # image has correct dimensions, but needs to be rotated
-            img = img.rotate(90, expand=True).convert('1')
+            img = img.rotate(90, expand=True).convert("1")
         else:
-            logger.warning("Wrong image dimensions: must be " + str(self.width) + "x" + str(self.height))
+            logger.warning(
+                "Wrong image dimensions: must be "
+                + str(self.width)
+                + "x"
+                + str(self.height)
+            )
             # return a blank buffer
-            return [0x00] * (int(self.width/8) * self.height)
+            return [0x00] * (int(self.width / 8) * self.height)
 
-        buf = bytearray(img.tobytes('raw'))
+        buf = bytearray(img.tobytes("raw"))
         # The bytes need to be inverted, because in the PIL world 0=black and 1=white, but
         # in the e-paper world 0=white and 1=black.
         for i in range(len(buf)):
@@ -161,32 +179,33 @@ class EPD:
 
         self.send_command(0x13)
         self.send_data2(imagered)
-        
+
         self.send_command(0x12)
         epdconfig.delay_ms(100)
         self.ReadBusy()
-        
+
     def Clear(self):
-        buf = [0x00] * (int(self.width/8) * self.height)
-        buf2 = [0xff] * (int(self.width/8) * self.height)
+        buf = [0x00] * (int(self.width / 8) * self.height)
+        buf2 = [0xFF] * (int(self.width / 8) * self.height)
         self.send_command(0x10)
         self.send_data2(buf2)
-            
+
         self.send_command(0x13)
         self.send_data2(buf)
-                
+
         self.send_command(0x12)
         epdconfig.delay_ms(100)
         self.ReadBusy()
 
     def sleep(self):
-        self.send_command(0x02) # POWER_OFF
+        self.send_command(0x02)  # POWER_OFF
         self.ReadBusy()
-        
-        self.send_command(0x07) # DEEP_SLEEP
-        self.send_data(0XA5)
-        
+
+        self.send_command(0x07)  # DEEP_SLEEP
+        self.send_data(0xA5)
+
         epdconfig.delay_ms(2000)
         epdconfig.module_exit()
-### END OF FILE ###
 
+
+### END OF FILE ###
