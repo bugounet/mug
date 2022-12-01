@@ -32,10 +32,11 @@ import logging
 from . import epdconfig
 
 # Display resolution
-EPD_WIDTH       = 176
-EPD_HEIGHT      = 264
+EPD_WIDTH = 176
+EPD_HEIGHT = 264
 
 logger = logging.getLogger(__name__)
+
 
 class EPD:
     def __init__(self):
@@ -49,11 +50,11 @@ class EPD:
     # Hardware reset
     def reset(self):
         epdconfig.digital_write(self.reset_pin, 1)
-        epdconfig.delay_ms(200) 
+        epdconfig.delay_ms(200)
         epdconfig.digital_write(self.reset_pin, 0)
         epdconfig.delay_ms(2)
         epdconfig.digital_write(self.reset_pin, 1)
-        epdconfig.delay_ms(200)   
+        epdconfig.delay_ms(200)
 
     # Send Command
     def send_command(self, command):
@@ -69,114 +70,114 @@ class EPD:
         epdconfig.spi_writebyte([data])
         epdconfig.digital_write(self.cs_pin, 1)
 
-    # send a lot of data   
+    # send a lot of data
     def send_data2(self, data):
         epdconfig.digital_write(self.dc_pin, 1)
         epdconfig.digital_write(self.cs_pin, 0)
         epdconfig.spi_writebyte2(data)
         epdconfig.digital_write(self.cs_pin, 1)
-        
+
     # Read Busy
     def ReadBusy(self):
         logger.debug("e-Paper busy")
-        while(epdconfig.digital_read(self.busy_pin) == 1):      # 0: idle, 1: busy
+        while epdconfig.digital_read(self.busy_pin) == 1:  # 0: idle, 1: busy
             epdconfig.delay_ms(10)
         logger.debug("e-Paper busy release")
-            
+
     # Setting the display window
     def SetWindows(self, Xstart, Ystart, Xend, Yend):
         self.send_command(0x44)
-        self.send_data((Xstart >> 3) & 0xff)
-        self.send_data((Xend >> 3) & 0xff)
-        
+        self.send_data((Xstart >> 3) & 0xFF)
+        self.send_data((Xend >> 3) & 0xFF)
+
         self.send_command(0x45)
-        self.send_data(Ystart & 0xff)
-        self.send_data((Ystart >> 8) & 0xff)
-        self.send_data(Yend & 0xff)
-        self.send_data((Yend >> 8) & 0xff)
-    
+        self.send_data(Ystart & 0xFF)
+        self.send_data((Ystart >> 8) & 0xFF)
+        self.send_data(Yend & 0xFF)
+        self.send_data((Yend >> 8) & 0xFF)
+
     # Set Cursor
     def SetCursor(self, Xstart, Ystart):
         self.send_command(0x4E)
-        self.send_data(Xstart & 0xff)
+        self.send_data(Xstart & 0xFF)
         self.send_command(0x4F)
-        self.send_data(Ystart & 0xff)
-        self.send_data((Ystart >> 8) & 0xff)
-        
+        self.send_data(Ystart & 0xFF)
+        self.send_data((Ystart >> 8) & 0xFF)
+
     # Initialize the e-Paper register
     def init(self):
-        if (epdconfig.module_init() != 0):
+        if epdconfig.module_init() != 0:
             return -1
-            
+
         self.reset()
 
-        self.ReadBusy() 
-        self.send_command(0x12)      
-        self.ReadBusy() 
-        
-        self.send_command(0x00)     
-        self.send_data(0x27) 
-        self.send_data(0x01) 
-        self.send_data(0x00) 
-        
-        self.send_command(0x11)     
-        self.send_data(0x03) 
-        
-        self.SetWindows(0, 0, self.width-1, self.height-1)
+        self.ReadBusy()
+        self.send_command(0x12)
+        self.ReadBusy()
+
+        self.send_command(0x00)
+        self.send_data(0x27)
+        self.send_data(0x01)
+        self.send_data(0x00)
+
+        self.send_command(0x11)
+        self.send_data(0x03)
+
+        self.SetWindows(0, 0, self.width - 1, self.height - 1)
         self.SetCursor(0, 0)
         return 0
 
     def getbuffer(self, image):
         # logger.debug("bufsiz = ",int(self.width/8) * self.height)
-        buf = [0xFF] * (int(self.width/8) * self.height)
-        image_monocolor = image.convert('1')
+        buf = [0xFF] * (int(self.width / 8) * self.height)
+        image_monocolor = image.convert("1")
         imwidth, imheight = image_monocolor.size
         pixels = image_monocolor.load()
         # logger.debug("imwidth = %d, imheight = %d",imwidth,imheight)
-        if(imwidth == self.width and imheight == self.height):
+        if imwidth == self.width and imheight == self.height:
             logger.debug("Vertical")
             for y in range(imheight):
                 for x in range(imwidth):
                     # Set the bits for the column of pixels at the current position.
                     if pixels[x, y] == 0:
                         buf[int((x + y * self.width) / 8)] &= ~(0x80 >> (x % 8))
-        elif(imwidth == self.height and imheight == self.width):
+        elif imwidth == self.height and imheight == self.width:
             logger.debug("Horizontal")
             for y in range(imheight):
                 for x in range(imwidth):
                     newx = y
                     newy = self.height - x - 1
                     if pixels[x, y] == 0:
-                        buf[int((newx + newy*self.width) / 8)] &= ~(0x80 >> (y % 8))
+                        buf[int((newx + newy * self.width) / 8)] &= ~(0x80 >> (y % 8))
         return buf
-    
+
     # Sends the image buffer in RAM to e-Paper and displays
     def display(self, imageblack, imagered):
-        Width = self.width / 8 
-        Height = self.height 
+        Width = self.width / 8
+        Height = self.height
 
         buf = [0x00] * int(Width * Height)
         for i in range(0, int(Width * Height)):
             buf[i] = ~imagered[i]
 
-        self.send_command(0x24) 
-        self.send_data2(imageblack) 
+        self.send_command(0x24)
+        self.send_data2(imageblack)
 
-        self.send_command(0x26) 
-        self.send_data2(buf) 
-        
+        self.send_command(0x26)
+        self.send_data2(buf)
+
         self.TurnOnDisplay()
 
     # Clear the screen
     def Clear(self):
         self.send_command(0x24)
-        self.send_data2([0xff] * int(self.width * self.height / 8))
+        self.send_data2([0xFF] * int(self.width * self.height / 8))
 
         self.send_command(0x26)
         self.send_data2([0x00] * int(self.width * self.height / 8))
-            
+
         self.TurnOnDisplay()
-        
+
     # Turn on display
     def TurnOnDisplay(self):
         self.send_command(0x20)
@@ -186,8 +187,9 @@ class EPD:
     def sleep(self):
         self.send_command(0x10)
         self.send_data(0x01)
-        
+
         epdconfig.delay_ms(2000)
         epdconfig.module_exit()
-### END OF FILE ###
 
+
+### END OF FILE ###
