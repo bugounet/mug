@@ -65,14 +65,17 @@ class Label:
 
         self.epd.display(self.epd.getbuffer(image.buffer))
 
-    def print_image(self, image_path):
-        buffer = Image.open(image_path)
-
-        buffer = buffer.convert("L")
-        # Threshold
-        buffer = buffer.point(lambda p: 255 if p > self.THRESHOLD else 0)
-        # To mono
-        buffer = buffer.convert("1")
+    def print_avatar(self, name):
+        image_path = f"./avatars/{name}.bmp"
+        buffer = Image.new(
+            "1", (self.epd.height, self.epd.width), 255
+        )  # 255: clear the frame
+        fond = ImageDraw.Draw(buffer)
+        size = self.get_size()
+        fond.rectangle([(0, 0), (size.width, size.height)], outline=0)
+        font = ImageFont.truetype("./Font.ttc", self.FONT_SIZE)
+        buffer.paste(Image.open(image_path), (0, 0))
+        fond.text((114, (104 / 2) - (self.FONT_SIZE / 2)), name, font=font, fill=0)
         self.epd.display(self.epd.getbuffer(buffer))
 
 
@@ -85,4 +88,4 @@ if __name__ == "__main__":
     # for page in pages:
     #     print_joke(page)
     #     time.sleep(5)
-    Label().print_image(image_path="./avatars/Jordane.jpeg")
+    Label().print_avatar("Denis")
