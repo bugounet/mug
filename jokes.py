@@ -20,8 +20,16 @@ import time, threading
 
 StartTime=time.time()
 
+last_joke_index = None
+
 def print_next_joke() :
-    random_joke_index = randrange(len(jokes))
+    global last_joke_index
+    random_joke_index = randrange(len(jokes))    
+    while random_joke_index == last_joke_index:
+        random_joke_index = randrange(len(jokes))    
+
+    last_joke_index = random_joke_index
+
     random_joke = jokes[random_joke_index]
     print_joke(random_joke)
 
@@ -42,7 +50,7 @@ class setInterval :
     def cancel(self) :
         self.stopEvent.set()
 
-JOKES_SELECTION_INTERVAL = 1
+JOKES_SELECTION_INTERVAL = int(os.environ.get("JOKES_SELECTION_INTERVAL", None)) or 10
 inter=setInterval(JOKES_SELECTION_INTERVAL, print_next_joke)
 
 # will stop interval in 5s
