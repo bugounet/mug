@@ -56,15 +56,17 @@ JOKES_SELECTION_INTERVAL = int(os.environ.get("JOKES_SELECTION_INTERVAL", 5)) or
 inter = setInterval(JOKES_SELECTION_INTERVAL, print_next_joke)
 
 
-from label_generator.main import split_joke, print_joke as print_joke_on_label
+from label_generator.main import Label
+
+label = Label()
 
 
 def print_joke(sentence: str):
     print(" got joke:", sentence)
     if sentence:
-        pages = split_joke(sentence)
+        pages = label.split_joke(sentence)
         for page in pages:
-            print_joke_on_label(page)
+            label.print_joke(page)
             if len(pages):
                 print("wait 5s")
                 time.sleep(5)
