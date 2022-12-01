@@ -22,11 +22,12 @@ StartTime = time.time()
 
 last_joke_index = None
 
-def print_next_joke() :
+
+def print_next_joke():
     global last_joke_index
-    random_joke_index = randrange(len(jokes))    
+    random_joke_index = randrange(len(jokes))
     while random_joke_index == last_joke_index:
-        random_joke_index = randrange(len(jokes))    
+        random_joke_index = randrange(len(jokes))
 
     last_joke_index = random_joke_index
     random_joke = jokes[random_joke_index]
@@ -50,14 +51,20 @@ class setInterval:
     def cancel(self):
         self.stopEvent.set()
 
+
 JOKES_SELECTION_INTERVAL = int(os.environ.get("JOKES_SELECTION_INTERVAL", 5)) or 10
-inter=setInterval(JOKES_SELECTION_INTERVAL, print_next_joke)
+inter = setInterval(JOKES_SELECTION_INTERVAL, print_next_joke)
 
 
-# will stop interval in 5s
-# t=threading.Timer(5,inter.cancel)
-# t.start()
+from label_generator.main import split_joke, print_joke as print_joke_on_label
 
 
 def print_joke(sentence: str):
-    print(sentence)
+    print(" got joke:", sentence)
+    if sentence:
+        pages = split_joke(sentence)
+        for page in pages:
+            print_joke_on_label(page)
+            if len(pages):
+                print("wait 5s")
+                time.sleep(5)
